@@ -42,7 +42,9 @@
                 // function binding for reading object hash from attribute string
                 // or from scope object property
                 // see Example 7 here: https://gist.github.com/CMCDragonkai/6282750
-                layerOptions: '&'
+                layerOptions: '&',
+                serviceId: '@'
+
             },
 
             controllerAs: 'vm',
@@ -146,6 +148,7 @@
 
                     // create the layer object
                     var layer = new ArcGISDynamicMapServiceLayer(self.url, layerOptions);
+                    layer.id = self.serviceId;
 
                     // set visible layers if passed as attribute
                     if (self.visibleLayers) {
