@@ -2,7 +2,7 @@
     'use strict';
     //AppDirectives.directive('feed',['FeedService',function(feedService) {
     angular.module('esri.map')
-        .directive('esriToc', ['$document', '$q', '$compile', '$http', function($document, $q, $compile, $http, esriRegistry) {
+        .directive('esriToc', ['$document', '$q', '$compile', '$http', function($document, $q, $compile, $http) {
             return {
                 restrict: 'E',
                 //scope: {},
@@ -182,35 +182,43 @@
 
                                     mapController.getMap().then(function(map) {
                                         angular.forEach(map.layerIds, function(layerId) {
-                                            // DON'T PUT BASEMAPS INTO TOC
+
                                             var currentVisibleLayers = [];
                                             var layersToToggle = [];
-                                            var parentsChecked = false;
-                                            var firstLevelChildrenChecked = false;
+                                            var returnValue = [];
                                             if ((map.basemapLayerIds.indexOf(layerId) === -1) && layerId === selectedNode.mapServiceLayerId) {
                                                 var currentLayer = map.getLayer(layerId);
+
                                                 currentVisibleLayers = currentLayer.visibleLayers.map(function(item) {
+
                                                     return parseInt(item, 10);
+
                                                 });
-                                                var returnValue = [];
+
+
                                                 selectedNode.checked = !selectedNode.checked;
                                                 layersToToggle = scope[treeId].getLeafSubLayers(selectedNode, returnValue);
-                                                parentsChecked = scope[treeId].areAllParentsChecked(scope.tocArray, selectedNode, selectedNode.layerId, true);
-                                                firstLevelChildrenChecked = scope[treeId].areAllFirstLevelChildrenChecked(selectedNode);
+
+
                                                 angular.forEach(layersToToggle, function(layer) {
                                                     var indexOfMatchingLayer = currentVisibleLayers.indexOf(layer.layerId);
-                                                    if (selectedNode.checked && layer.checked && indexOfMatchingLayer === -1 &&firstLevelChildrenChecked && parentsChecked) {
-                                                      currentVisibleLayers.push(layer.layerId);
-                                                    } else if (indexOfMatchingLayer !== -1) {
+                                                    if (indexOfMatchingLayer !== -1) {
                                                         currentVisibleLayers.splice(indexOfMatchingLayer, 1);
+                                                    } else {
+                                                        if (!layer.isParent && selectedNode.checked && layer.checked && layer.parentsChecked) {
+                                                            currentVisibleLayers.push(layer.layerId);
+                                                        }
                                                     }
+
+
                                                 });
 
                                                 if (currentVisibleLayers.length === 0) {
-                                                    currentVisibleLayers = [-1];
+                                                    currentVisibleLayers.push(-1);
                                                 }
                                                 console.log('currentVisibleLayers:' + currentVisibleLayers);
                                                 currentLayer.setVisibleLayers(currentVisibleLayers);
+
                                             }
                                         });
 
@@ -219,47 +227,59 @@
 
                                 };
 
+
+
                                 scope[treeId].getLeafSubLayers = function(node, returnValue) {
+
                                     var o = {};
                                     o.layerId = node.layerId;
                                     o.checked = node.checked;
+                                    o.isParent = angular.isDefined(node.subLayers);
+                                    o.parentsChecked = scope[treeId].areAllParentsChecked(node);
                                     returnValue.push(o);
-
                                     angular.forEach(node.subLayers, function(value) {
                                         scope[treeId].getLeafSubLayers(value, returnValue);
                                     });
-
                                     return returnValue;
 
                                 };
 
-                                scope[treeId].areAllParentsChecked = function(list, node, originalLayerId, returnValue) {
-                                    angular.forEach(list, function(value) {
-                                        if (value.mapServiceLayerId === node.mapServiceLayerId) {
-                                            if (value.layerId === node.parentLayerId) {
-                                                if (value.checked) {
-                                                    returnValue = returnValue && true;
-                                                } else {
-                                                    returnValue = returnValue && false;
-                                                    return returnValue;
-                                                }
-                                            }
-                                            if (value.layerId !== originalLayerId) {
-                                                returnValue = scope[treeId].areAllParentsChecked(value.subLayers, node, originalLayerId, returnValue);
+                                scope[treeId].areAllParentsChecked = function(node) {
+                                    var layersArray = scope[treeId].flattenToc(scope.tocArray[0].subLayers, []);
+
+                                    var parentsArray = [];
+                                    parentsArray = scope[treeId].getParents(layersArray, node, parentsArray);
+
+                                    var returnValue = true;
+
+                                    angular.forEach(parentsArray, function(value) {
+                                        returnValue = returnValue && value.checked;
+                                    });
+                                    return returnValue;
+
+                                };
+
+                                scope[treeId].flattenToc = function(layers, returnValue) {
+                                  angular.forEach(layers, function(value) {
+                                    returnValue.push(value);
+                                    scope[treeId].flattenToc(value.subLayers, returnValue);
+                                  });
+                                  return returnValue;
+                                };
+
+                                scope[treeId].getParents = function(layerArray, node, returnValue) {
+
+                                    angular.forEach(layerArray, function(value) {
+                                        if (value.mapServiceLayerId === node.mapServiceLayerId && value.layerId === node.parentLayerId) {
+                                            returnValue.push(value);
+                                            if (angular.isDefined(value.subLayers)) {
+                                                returnValue = scope[treeId].getParents(layerArray, value, returnValue);
                                             }
                                         }
+
                                     });
+
                                     return returnValue;
-
-                                };
-
-                                scope[treeId].areAllFirstLevelChildrenChecked = function(node) {
-                                    var returnValue = true;
-                                    angular.forEach(node.subLayers, function(value) {
-                                        returnValue = returnValue && node.checked;
-                                    });
-                                    return returnValue;
-
                                 };
 
                                 //if parent node label clicks,
