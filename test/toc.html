@@ -64,7 +64,8 @@
     <div class="container row">
         <div class="col-xs-9">
             <esri-map id="map" center="map.center" zoom="map.zoom" basemap="topo" style="width: 100%">
-                <esri-dynamic-map-service-layer service-id="nfc" title="NFC" url="http://gisp.mcgi.state.mi.us/arcgis/rest/services/MDOT/NFC/MapServer" visible="true" opacity="1.0" toc-layers="0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16" visible-layers="0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16" />
+                <esri-dynamic-map-service-layer layer-options="{id: 'nfc'}" title="NFC" url="http://gisp.mcgi.state.mi.us/arcgis/rest/services/MDOT/NFC/MapServer" visible="true" opacity="1.0" toc-layers="0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16" visible-layers="0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16" />
+                <esri-dynamic-map-service-layer layer-options="{id: 'acub'}" title="ACUB" url="http://gisp.mcgi.state.mi.us/arcgis/rest/services/MDOT/ACUB/MapServer" visible="true" opacity="1.0" toc-layers="0,1,2,3,4,5" visible-layers="0,1,2,3,4,5" />
                 <esri-toc tree-id="TOC1" map-id="map" target-id="toc" root-node="true">
                 </esri-toc>
             </esri-map>
